@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="canonical" href="https://cryptooptiontool.com/en/" />
+<link rel="alternate" hreflang="zh" href="https://cryptooptiontool.com/" />
+<link rel="alternate" hreflang="en" href="https://cryptooptiontool.com/en/" />
+<link rel="alternate" hreflang="x-default" href="https://cryptooptiontool.com/" />
+<meta name="description" content="BTC Wheel Strategy Assistant — Real-time DVOL, Fear & Greed Index, options chain filtering, and entry signals to earn passive income with BTC options." />
+<meta property="og:title" content="Reggie's Wheel Strategy Assistant · BTC Options Tool" />
+<meta property="og:description" content="BTC Wheel Strategy — Real-time DVOL, Fear & Greed, options screening and entry signals" />
+<meta property="og:url" content="https://cryptooptiontool.com/en/" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:locale:alternate" content="zh_CN" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@0xReggieJ" />
+<title>Reggie's Wheel Strategy Assistant · BTC Options Tool</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─── Reset & Base ─── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--card:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;
+  --green:#3fb950;--red:#f85149;--blue:#58a6ff;
+  --orange:#d29922;--purple:#a371f7;--yellow:#e3b341;
+  --put:#e3b341;--call:#a371f7;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.6}
+a{color:var(--blue);text-decoration:none}
+
+/* ─── Layout ─── */
+.container{max-width:1200px;margin:0 auto;padding:0 16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+/* ─── Header ─── */
+.header{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:12px 0}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.btc-price-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btc-price{font-size:22px;font-weight:700;color:var(--yellow)}
+.price-change{font-size:13px;padding:3px 8px;border-radius:4px;font-weight:600}
+.price-change.up{background:rgba(63,185,80,.15);color:var(--green)}
+.price-change.down{background:rgba(248,81,73,.15);color:var(--red)}
+.last-update{color:var(--muted);font-size:12px}
+
+/* ─── Cards ─── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.card-title{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* ─── Decision Card ─── */
+.decision-card{border:2px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;text-align:center;transition:border-color .3s}
+.decision-card.sell-put{border-color:var(--put)}
+.decision-card.sell-call{border-color:var(--call)}
+.decision-card.wait{border-color:var(--border)}
+.decision-badge{display:inline-block;padding:10px 28px;border-radius:30px;font-size:24px;font-weight:800;letter-spacing:1px;margin:12px 0}
+.decision-badge.sell-put{background:rgba(227,179,65,.15);color:var(--put);border:2px solid var(--put)}
+.decision-badge.sell-call{background:rgba(163,113,247,.15);color:var(--call);border:2px solid var(--call)}
+.decision-badge.wait{background:rgba(139,148,158,.1);color:var(--muted);border:2px solid var(--border)}
+.decision-reason{color:var(--muted);font-size:13px;margin-top:8px}
+.position-toggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.pos-btn{padding:8px 20px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:13px;transition:all .2s}
+.pos-btn.active{border-color:var(--blue);color:var(--blue);background:rgba(88,166,255,.1)}
+
+/* ─── Wheel Flow ─── */
+.wheel-flow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;padding:8px 0}
+.wheel-node{text-align:center;padding:12px 16px;border-radius:10px;min-width:110px}
+.wheel-node.usdt{background:rgba(63,185,80,.1);border:1.5px solid var(--green)}
+.wheel-node.btc{background:rgba(227,179,65,.1);border:1.5px solid var(--yellow)}
+.wheel-node.action-put{background:rgba(227,179,65,.08);border:1.5px dashed var(--put)}
+.wheel-node.action-call{background:rgba(163,113,247,.08);border:1.5px dashed var(--call)}
+.wheel-node-title{font-weight:700;font-size:13px}
+.wheel-node-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.wheel-arrow{color:var(--muted);font-size:20px;padding:0 6px;flex-shrink:0}
+.wheel-arrow.you{color:var(--blue);font-weight:700}
+.you-label{font-size:10px;color:var(--blue);text-align:center;margin-top:-4px}
+
+/* ─── Signal Bars ─── */
+.signal-bar{margin-bottom:14px}
+.signal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.signal-label{font-size:13px}
+.signal-value{font-size:12px;color:var(--muted)}
+.bar-track{background:#1f2937;border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.bar-fill.green{background:var(--green)}
+.bar-fill.orange{background:var(--orange)}
+.bar-fill.red{background:var(--red)}
+.bar-fill.gray{background:var(--muted)}
+
+/* ─── Score Ring ─── */
+.score-ring-wrap{text-align:center;padding:8px}
+.score-num{font-size:42px;font-weight:800;line-height:1}
+.score-label{font-size:12px;color:var(--muted);margin-top:4px}
+.score-desc{font-size:12px;margin-top:6px;padding:4px 10px;border-radius:20px;display:inline-block}
+.score-desc.high{background:rgba(63,185,80,.15);color:var(--green)}
+.score-desc.mid{background:rgba(210,153,34,.15);color:var(--orange)}
+.score-desc.low{background:rgba(139,148,158,.1);color:var(--muted)}
+
+/* ─── Tabs ─── */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;gap:4px}
+.tab-btn{padding:9px 20px;border:none;background:none;color:var(--muted);cursor:pointer;font-size:13px;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--blue)}
+.tab-btn.put-tab.active{color:var(--put);border-bottom-color:var(--put)}
+.tab-btn.call-tab.active{color:var(--call);border-bottom-color:var(--call)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ─── Options Table ─── */
+.options-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filter-group{display:flex;align-items:center;gap:6px}
+.filter-group label{font-size:12px;color:var(--muted)}
+.filter-group select,.filter-group input{background:#1f2937;border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px}
+.options-table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:8px 10px;text-align:left;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer}
+th:hover{color:var(--text)}
+td{padding:9px 10px;border-bottom:1px solid rgba(48,54,61,.5);white-space:nowrap}
+tr:hover td{background:rgba(255,255,255,.03)}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600}
+.badge.rec{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.badge.caution{background:rgba(210,153,34,.15);color:var(--orange)}
+.badge.risky{background:rgba(248,81,73,.15);color:var(--red)}
+.yield-good{color:var(--green);font-weight:600}
+.yield-mid{color:var(--orange)}
+.yield-low{color:var(--muted)}
+
+/* ─── Risk Calculator ─── */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.calc-grid{grid-template-columns:1fr}}
+.input-group{margin-bottom:12px}
+.input-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.input-group input,.input-group select{width:100%;background:#1f2937;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px}
+.result-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(48,54,61,.4);font-size:13px}
+.result-row:last-child{border-bottom:none}
+.result-key{color:var(--muted)}
+.result-val{font-weight:600}
+.result-val.green{color:var(--green)}
+.result-val.red{color:var(--red)}
+.pnl-canvas-wrap{position:relative;height:160px;margin-top:8px}
+
+/* ─── Charts ─── */
+.chart-wrap{position:relative;height:200px}
+.chart-wrap-tall{position:relative;height:320px}
+
+/* ─── Rainbow Band Indicator ─── */
+.rainbow-band-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-top:10px}
+.rainbow-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.rl-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+.rl-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ─── Metrics Row ─── */
+.metric-card{background:#1f2937;border-radius:8px;padding:14px;text-align:center}
+.metric-val{font-size:22px;font-weight:700;margin:4px 0}
+.metric-label{font-size:11px;color:var(--muted)}
+.metric-sub{font-size:11px;margin-top:2px}
+
+/* ─── Education Accordion ─── */
+.accordion{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.accordion-header{padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;background:var(--card)}
+.accordion-header:hover{background:#1f2937}
+.accordion-arrow{transition:transform .3s;color:var(--muted)}
+.accordion-body{display:none;padding:16px;background:#0d1117;font-size:13px;color:var(--muted);line-height:1.8;border-top:1px solid var(--border)}
+.accordion-body.open{display:block}
+.accordion-body ul{padding-left:18px;margin:8px 0}
+.accordion-body li{margin-bottom:4px}
+.accordion-body strong{color:var(--text)}
+.example-box{background:var(--card);border-radius:6px;padding:12px;margin-top:10px;font-size:12px;font-family:monospace;line-height:1.9}
+
+/* ─── Status ─── */
+.loading{display:inline-block;width:10px;height:10px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:6px}
+.tag.green{background:rgba(63,185,80,.15);color:var(--green)}
+.tag.red{background:rgba(248,81,73,.15);color:var(--red)}
+.tag.gray{background:#1f2937;color:var(--muted)}
+.empty-row td{text-align:center;color:var(--muted);padding:24px}
+
+/* ─── Help Tooltip ─── */
+.help-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(88,166,255,.12);color:var(--blue);font-size:11px;font-weight:700;cursor:help;margin-left:auto;flex-shrink:0;line-height:1;border:1px solid rgba(88,166,255,.25);transition:all .2s}
+.help-tip:hover{background:rgba(88,166,255,.25);border-color:var(--blue)}
+.help-tip .tip-text{visibility:hidden;opacity:0;position:absolute;z-index:200;right:0;top:calc(100% + 8px);width:280px;background:#1f2937;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12px;font-weight:400;color:var(--text);line-height:1.7;text-transform:none;letter-spacing:0;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;transition:opacity .2s,visibility .2s}
+.help-tip:hover .tip-text{visibility:visible;opacity:1;pointer-events:auto}
+.tip-text strong{color:var(--blue)}
+.tip-text .tip-title{font-weight:700;color:var(--yellow);margin-bottom:6px;font-size:13px}
+@media(max-width:768px){.help-tip .tip-text{width:240px;right:-20px}}
+
+/* ─── Footer ─── */
+.footer{text-align:center;padding:24px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:24px}
+.disclaimer{background:rgba(210,153,34,.08);border:1px solid rgba(210,153,34,.3);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--orange);margin-bottom:16px}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">🎡 Reggie's Wheel Strategy Assistant <a href="about.html" style="font-size:12px;color:var(--muted);font-weight:400;margin-left:8px;border:1px solid var(--border);padding:2px 10px;border-radius:12px">About</a></div>
+      <div class="btc-price-bar">
+        <a href="../" style="font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 10px;border-radius:12px;margin-right:8px">中文</a>
+        <span class="btc-price" id="btcPrice">Loading…</span>
+        <span class="price-change" id="priceChange1h">1h</span>
+        <span class="price-change" id="priceChange24h">24h</span>
+        <span class="last-update" id="lastUpdate"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container" style="padding-top:20px">
+
+  <!-- ═══ DISCLAIMER ═══ -->
+  <div class="disclaimer">⚠️ This tool is for reference only and does not constitute investment advice. Options trading involves significant risk.</div>
+
+  <!-- ═══ MAIN DECISION CARD ═══ -->
+  <div class="card" style="padding:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px"><span>📍 What should I do now?</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">How to read?</span><span>This gives you a <strong>one-line recommendation</strong> based on all indicators. Yellow border = Sell Put, purple = Sell Call, gray = Wait.<br><br><strong>How to use?</strong> First select what you hold (USDT or BTC) using the buttons above. The 4 metric cards below support the decision.</span></span></span></div>
+        <div style="font-size:12px;color:var(--muted)">Based on current market indicators</div>
+      </div>
+      <div class="position-toggle">
+        <button class="pos-btn active" id="posUsdt" onclick="setPosition('usdt')">💵 I have USDT</button>
+        <button class="pos-btn" id="posBtc" onclick="setPosition('btc')">₿ I hold BTC</button>
+      </div>
+    </div>
+    <div id="decisionCard" class="decision-card wait">
+      <div style="color:var(--muted);font-size:13px">Loading market data…</div>
+      <div id="decisionBadge" class="decision-badge wait"><span class="loading"></span><span>Analyzing</span></div>
+      <div id="decisionReason" class="decision-reason"></div>
+    </div>
+    <!-- Key metrics row -->
+    <div class="grid-4" style="margin-top:14px">
+      <div class="metric-card">
+        <div class="metric-label">DVOL (Volatility Index)</div>
+        <div class="metric-val" id="dvolNow">--</div>
+        <div class="metric-sub" id="dvolChange">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">IVP (Historical Percentile)</div>
+        <div class="metric-val" id="ivpNow">--%</div>
+        <div class="metric-sub" id="ivpDesc" style="color:var(--muted)">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Fear & Greed Index</div>
+        <div class="metric-val" id="fngNow">--</div>
+        <div class="metric-sub" id="fngDesc" style="color:var(--muted)">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">BTC 1h Change</div>
+        <div class="metric-val" id="btc1h">--%</div>
+        <div class="metric-sub" style="color:var(--muted)">vs 1 hour ago</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ WHEEL STRATEGY FLOW ═══ -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--blue)"></span><span>Wheel Strategy — Full Cycle</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">How to read?</span><span>This is the full Wheel strategy cycle. Follow the arrows left to right: <strong>Have USDT → Sell Put → Assigned hold BTC → Sell Call → Assigned back to USDT</strong>. You collect premium at every step.<br><br><strong>How to use?</strong> See where you are in the cycle, then check the signal panels below.</span></span></span></div>
+    <div class="wheel-flow" id="wheelFlow">
+      <div class="wheel-node usdt">
+        <div class="wheel-node-title">💵 Have USDT</div>
+        <div class="wheel-node-sub">Idle funds</div>
+      </div>
+      <div><div class="wheel-arrow">→</div></div>
+      <div class="wheel-node action-put">
+        <div class="wheel-node-title" style="color:var(--put)">Sell Put</div>
+        <div class="wheel-node-sub">Collect premium</div>
+      </div>
+      <div>
+        <div class="wheel-arrow">→</div>
+        <div style="font-size:10px;color:var(--green);text-align:center">Assigned</div>
+      </div>
+      <div class="wheel-node btc">
+        <div class="wheel-node-title">₿ Hold BTC</div>
+        <div class="wheel-node-sub">Buy low</div>
+      </div>
+      <div><div class="wheel-arrow">→</div></div>
+      <div class="wheel-node action-call">
+        <div class="wheel-node-title" style="color:var(--call)">Sell Call</div>
+        <div class="wheel-node-sub">Collect premium</div>
+      </div>
+      <div>
+        <div class="wheel-arrow">→</div>
+        <div style="font-size:10px;color:var(--green);text-align:center">Assigned</div>
+      </div>
+      <div class="wheel-node usdt">
+        <div class="wheel-node-title">💵 Have USDT</div>
+        <div class="wheel-node-sub">Sold high ✅</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:10px">Collect premium at every step, whether assigned or not 💰</div>
+  </div>
+
+  <!-- ═══ SIGNAL PANELS ═══ -->
+  <div class="grid-2">
+    <!-- Sell Put Signals -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--put)"></span><span>Sell Put Entry Signals</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">How to read?</span><span>3 progress bars = 3 entry conditions: <strong>BTC dip, DVOL spike, IVP high</strong>. Fuller (greener) bars mean more mature conditions. Score 0-100 below is the composite.<br><br><strong>How to use?</strong> Score ≥65 is a good time to sell puts (high vol = rich premiums). Below 35, wait.</span></span></span></div>
+      <div id="putSignals">
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">① BTC 1h Drop Severity</span><span class="signal-value" id="sig-drop-val">-- / need ≥2.5%</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-drop-bar" style="width:0%"></div></div>
+        </div>
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">② DVOL 1h Panic Spike</span><span class="signal-value" id="sig-dvol-val">-- / need ≥5%</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-dvol-bar" style="width:0%"></div></div>
+        </div>
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">③ Volatility Percentile (IVP)</span><span class="signal-value" id="sig-ivp-val">-- / want ≥70</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-ivp-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <hr style="border-color:var(--border);margin:14px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="score-ring-wrap">
+          <div class="score-num" id="putScore" style="color:var(--put)">--</div>
+          <div class="score-label">/ 100 Score</div>
+          <div class="score-desc low" id="putScoreDesc">Loading</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);max-width:200px;text-align:right" id="putAdvice">
+          When all 3 conditions are met, a dip is an entry signal. High volatility = rich premiums.
+        </div>
+      </div>
+    </div>
+
+    <!-- Covered Call Signals -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--call)"></span><span>Covered Call Entry Signals</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">How to read?</span><span>3 conditions: <strong>High DVOL, market greedy, BTC rising</strong>. When met, it's good to sell calls and lock profits.<br><br><strong>How to use?</strong> Use when holding BTC. Score ≥65 means sell calls. Not suitable during market panic.</span></span></span></div>
+      <div id="callSignals">
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">① DVOL Level (higher = better)</span><span class="signal-value" id="sig-cc-dvol-val">-- / want ≥50</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-cc-dvol-bar" style="width:0%"></div></div>
+        </div>
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">② Fear & Greed leaning greedy</span><span class="signal-value" id="sig-cc-fng-val">-- / want ≥60</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-cc-fng-bar" style="width:0%"></div></div>
+        </div>
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">③ BTC recent rally (near resistance)</span><span class="signal-value" id="sig-cc-rise-val">-- / want ≥1%</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-cc-rise-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <hr style="border-color:var(--border);margin:14px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="score-ring-wrap">
+          <div class="score-num" id="callScore" style="color:var(--call)">--</div>
+          <div class="score-label">/ 100 Score</div>
+          <div class="score-desc low" id="callScoreDesc">Loading</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);max-width:200px;text-align:right">
+          Sell Calls while holding BTC to lock in profits near highs and earn premium.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTIONS TABLE + RISK CALC ═══ -->
+  <div class="card">
+    <div class="tabs">
+      <button class="tab-btn put-tab active" onclick="switchTab('options','put')">📋 Sell Put Contracts</button>
+      <button class="tab-btn call-tab" onclick="switchTab('options','call')">📋 Covered Call Contracts</button>
+      <button class="tab-btn" onclick="switchTab('options','calc')">🧮 P&L Calculator</button>
+      <span class="help-tip" style="margin-left:auto;margin-bottom:1px">?<span class="tip-text"><span class="tip-title">How to read?</span><span><strong>Sell Put table</strong>: Lists available put options sorted by annual yield. Focus on Delta (lower = safer) and yield.<br><strong>Covered Call table</strong>: Similar for call options.<br><strong>P&L Calculator</strong>: Visualize your profit/loss curve.<br><br><strong>How to use?</strong> Filter for suitable contracts. Beginners: Delta ≤0.20, 14-21 day expiry. Green "Conservative" badge is the safest.</span></span></span>
+    </div>
+
+    <!-- PUT TABLE -->
+    <div class="tab-content active" id="options-tab-put">
+      <div class="options-filters">
+        <div class="filter-group"><label>Min expiry (days)</label><input type="number" id="put-min-days" value="7" min="1" max="90" style="width:60px" onchange="renderPutTable()"></div>
+        <div class="filter-group"><label>Max expiry (days)</label><input type="number" id="put-max-days" value="45" min="1" max="180" style="width:60px" onchange="renderPutTable()"></div>
+        <div class="filter-group"><label>Min annual yield</label><input type="number" id="put-min-yield" value="5" min="0" step="1" style="width:60px" onchange="renderPutTable()"><span style="color:var(--muted)">%</span></div>
+        <div class="filter-group"><label>Risk preference</label>
+          <select id="put-risk" onchange="renderPutTable()">
+            <option value="all">All</option>
+            <option value="conservative" selected>Conservative (Delta &lt;0.25)</option>
+            <option value="moderate">Moderate (Delta &lt;0.40)</option>
+          </select>
+        </div>
+      </div>
+      <div class="options-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTable('put','strike')">Strike ↕</th>
+              <th onclick="sortTable('put','expiry')">Expiry ↕</th>
+              <th>Days</th>
+              <th onclick="sortTable('put','delta')">Delta ↕</th>
+              <th>Impl. Vol.</th>
+              <th onclick="sortTable('put','yield')">Ann. Yield ↕</th>
+              <th>Premium (BTC)</th>
+              <th>Breakeven</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody id="put-tbody">
+            <tr class="empty-row"><td colspan="9"><span class="loading"></span><span>Loading options data…</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px">💡 <strong style="color:var(--text)">Beginner tip</strong>: Choose Delta around -0.20, 14-21 days to expiry, ~20% assignment probability, manageable risk.</div>
+    </div>
+
+    <!-- CALL TABLE -->
+    <div class="tab-content" id="options-tab-call">
+      <div class="options-filters">
+        <div class="filter-group"><label>Min expiry (days)</label><input type="number" id="call-min-days" value="7" min="1" max="90" style="width:60px" onchange="renderCallTable()"></div>
+        <div class="filter-group"><label>Max expiry (days)</label><input type="number" id="call-max-days" value="45" min="1" max="180" style="width:60px" onchange="renderCallTable()"></div>
+        <div class="filter-group"><label>Min annual yield</label><input type="number" id="call-min-yield" value="5" min="0" step="1" style="width:60px" onchange="renderCallTable()"><span style="color:var(--muted)">%</span></div>
+        <div class="filter-group"><label>Risk preference</label>
+          <select id="call-risk" onchange="renderCallTable()">
+            <option value="all">All</option>
+            <option value="conservative" selected>Conservative (Delta &lt;0.25)</option>
+            <option value="moderate">Moderate (Delta &lt;0.40)</option>
+          </select>
+        </div>
+      </div>
+      <div class="options-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTable('call','strike')">Strike ↕</th>
+              <th onclick="sortTable('call','expiry')">Expiry ↕</th>
+              <th>Days</th>
+              <th onclick="sortTable('call','delta')">Delta ↕</th>
+              <th>Impl. Vol.</th>
+              <th onclick="sortTable('call','yield')">Ann. Yield ↕</th>
+              <th>Premium (BTC)</th>
+              <th>Assign Price</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody id="call-tbody">
+            <tr class="empty-row"><td colspan="9"><span class="loading"></span><span>Loading options data…</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px">💡 <strong style="color:var(--text)">Beginner tip</strong>: Choose Delta around 0.20, 14-21 days to expiry, strike 10-20% above current price.</div>
+    </div>
+
+    <!-- RISK CALCULATOR -->
+    <div class="tab-content" id="options-tab-calc">
+      <div class="calc-grid">
+        <div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px">Input Parameters</div>
+          <div class="input-group">
+            <label>Strategy type</label>
+            <select id="calc-type" onchange="updateCalc()">
+              <option value="put">Sell Put</option>
+              <option value="call">Covered Call</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>My capital (USDT)</label>
+            <input type="number" id="calc-capital" value="10000" onchange="updateCalc()">
+          </div>
+          <div class="input-group">
+            <label id="calc-strike-label">Strike price (USD)</label>
+            <input type="number" id="calc-strike" value="75000" onchange="updateCalc()">
+          </div>
+          <div class="input-group">
+            <label>Days to expiry</label>
+            <input type="number" id="calc-days" value="14" onchange="updateCalc()">
+          </div>
+          <div class="input-group">
+            <label>Premium per contract (USDT)</label>
+            <input type="number" id="calc-premium" value="400" onchange="updateCalc()">
+          </div>
+          <div class="input-group">
+            <label>BTC current price (auto-filled)</label>
+            <input type="number" id="calc-btc-price" value="80000" onchange="updateCalc()">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px">Results</div>
+          <div id="calc-results">
+            <div class="result-row"><span class="result-key">Max profit (premium)</span><span class="result-val green" id="res-max-profit">--</span></div>
+            <div class="result-row"><span class="result-key">Max loss</span><span class="result-val red" id="res-max-loss">--</span></div>
+            <div class="result-row"><span class="result-key">Breakeven</span><span class="result-val" id="res-breakeven">--</span></div>
+            <div class="result-row"><span class="result-key">Margin required (approx.)</span><span class="result-val" id="res-margin">--</span></div>
+            <div class="result-row"><span class="result-key">Expected annual yield</span><span class="result-val green" id="res-annual">--</span></div>
+            <div class="result-row"><span class="result-key">Assignment probability (approx.)</span><span class="result-val" id="res-prob">--</span></div>
+          </div>
+          <div style="margin-top:14px;font-size:13px;font-weight:600;margin-bottom:6px">P&L at Expiry</div>
+          <div class="pnl-canvas-wrap">
+            <canvas id="pnlChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHARTS ═══ -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span><span>DVOL Volatility Index (90d)</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">How to read?</span><span>DVOL is Deribit's BTC volatility index, similar to VIX. <strong>Higher = more expected volatility = more expensive options</strong>.<br>• Below 50: Low, average seller returns<br>• 50-80: Moderate<br>• Above 80: Very high, golden period for sellers<br><br><strong>How to use?</strong> Sell options when DVOL is high for richer premiums.</span></span></span></div>
+      <div class="chart-wrap"><canvas id="dvolChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--orange)"></span><span>Fear & Greed Index (90d)</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">How to read?</span><span>0-100 sentiment indicator. <strong>0 = Extreme Fear, 100 = Extreme Greed</strong>.<br>• Red bars (≤25): Market fear — sell puts<br>• Orange (25-75): Neutral<br>• Green (≥75): Market greed — sell calls<br><br><strong>How to use?</strong> Sell puts during fear, sell calls during greed.</span></span></span></div>
+      <div class="chart-wrap"><canvas id="fngChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ═══ RAINBOW CHART ═══ -->
+  <div class="card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div>
+        <div class="card-title" style="margin-bottom:4px"><span class="dot" style="background:linear-gradient(90deg,#3F51B5,#4CAF50,#FF5722)"></span><span>BTC Rainbow Chart (Log Regression)</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">How to read?</span><span>Rainbow chart divides BTC price into 9 bands using log regression:<br>• <strong>Blue</strong>: Extremely undervalued, historic buy zone<br>• <strong>Green</strong>: Fair value, HODL zone<br>• <strong>Red</strong>: Extreme bubble, consider reducing<br><br><strong>How to use?</strong> Top-right shows current band. <strong>Blue/green = safer to sell puts</strong>, <strong>orange/red = better to sell calls</strong>.</span></span></span></div>
+        <div style="font-size:12px;color:var(--muted)">Log regression model showing which historical valuation band BTC currently sits in</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Current band</div>
+        <div id="rainbowBandBadge" class="rainbow-band-badge" style="background:rgba(139,148,158,0.15);color:var(--muted);border:1.5px solid var(--border)">
+          <span id="rainbowBandDot" style="width:10px;height:10px;border-radius:50%;background:var(--muted);display:inline-block"></span>
+          <span id="rainbowBandName">Loading…</span>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap-tall"><canvas id="rainbowChart"></canvas></div>
+    <div class="rainbow-legend" id="rainbowLegend"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">
+      📐 Model: log₁₀(price) = 5.845 × log₁₀(days since genesis) + b, ref: blockchaincenter.net. White line = BTC monthly close.
+    </div>
+  </div>
+
+  <!-- ═══ EDUCATION ═══ -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--green)"></span><span>Beginner Guide — Read Before Trading</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">How to read?</span><span>4 expandable tutorials. Click to open/close. Read <strong>top to bottom</strong>.<br><br><strong>How to use?</strong> If you're new to options, read all tutorials before trading. They include concrete examples with numbers.</span></span></span></div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        🎡 What is the Wheel Strategy?
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <p>The Wheel strategy is a method of <strong>earning passive income by repeatedly selling options</strong>, ideal for investors who are long-term bullish on BTC.</p>
+        <ul>
+          <li><strong>Step 1 (Have USDT):</strong> Sell Put options below current price, collect premium</li>
+          <li><strong>If assigned:</strong> Buy BTC at strike (cheaper than expected), plus you already collected premium</li>
+          <li><strong>Hold BTC:</strong> Sell Call options above current price, keep collecting premium</li>
+          <li><strong>If assigned:</strong> Sell BTC at strike (higher than expected), profit, back to USDT</li>
+        </ul>
+        <p style="margin-top:8px">Core idea: <strong>You earn premium at every step regardless of direction.</strong> The main risk is if BTC drops sharply, unrealized losses on BTC holdings may exceed premium income.</p>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        💛 Sell Put Explained (When Holding USDT)
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <p><strong>Selling a put option</strong>: You sell someone the right to sell you BTC at the strike price before expiry.</p>
+        <div class="example-box">
+          📌 Example: BTC current price $80,000<br>
+          You sell a Put with strike $75,000, 14 days to expiry<br>
+          Premium received: $400<br><br>
+          Scenario 1 (BTC at expiry > $75,000): Option expires worthless ✅ You keep $400<br>
+          Scenario 2 (BTC at expiry = $73,000): You must buy at $75,000<br>
+          &nbsp;&nbsp;Actual cost = $75,000 - $400 = $74,600<br>
+          &nbsp;&nbsp;Paper loss: $73,000 - $74,600 = -$1,600
+        </div>
+        <ul style="margin-top:10px">
+          <li><strong>Max profit:</strong> Premium (BTC stays above strike)</li>
+          <li><strong>Max loss:</strong> Strike × contracts (BTC drops to 0, extreme case)</li>
+          <li><strong>Tip:</strong> Choose strike 10-20% below current price, Delta around -0.20</li>
+        </ul>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        💜 Covered Call Explained (When Holding BTC)
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <p><strong>Covered call</strong>: While holding BTC, sell Call options above current price, using your holdings as collateral.</p>
+        <div class="example-box">
+          📌 Example: You hold 1 BTC, current price $80,000<br>
+          You sell a Call with strike $90,000, 21 days to expiry<br>
+          Premium received: $600<br><br>
+          Scenario 1 (BTC at expiry < $90,000): Option expires worthless ✅ You keep $600, still hold BTC<br>
+          Scenario 2 (BTC at expiry = $95,000): You must sell at $90,000<br>
+          &nbsp;&nbsp;Actual sale price = $90,000 + $600 = $90,600<br>
+          &nbsp;&nbsp;You miss $95,000 but earned $600 more than just holding
+        </div>
+        <ul style="margin-top:10px">
+          <li><strong>Max profit:</strong> (Strike - entry cost) × contracts + premium</li>
+          <li><strong>Main risk:</strong> BTC crashes, premium doesn't cover holding losses</li>
+          <li><strong>Tip:</strong> Choose strike 10-20% above current price, Delta around 0.20</li>
+        </ul>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        📊 Understanding Delta / IV / IVP
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <ul>
+          <li><strong>Delta (-1 to 0 / 0 to 1):</strong> Reflects assignment probability. Put Delta -0.20 means ~20% chance of assignment. Closer to 0 = safer, lower returns.</li>
+          <li><strong>IV (Implied Volatility):</strong> Market's expected BTC volatility. Higher IV = more expensive options = higher seller returns.</li>
+          <li><strong>DVOL:</strong> Deribit's BTC volatility index, similar to stock market VIX. Below 50 is low, above 80 is high.</li>
+          <li><strong>IVP (IV Percentile):</strong> Where current DVOL ranks over the past year. IVP > 70 means vol is historically high — good time to sell options.</li>
+          <li><strong>Theta:</strong> Daily time decay of option value. As a seller, Theta is your friend — it earns you money every day.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Data sources: <a href="https://www.binance.com" target="_blank">Binance</a> (BTC price) ·
+    <a href="https://www.deribit.com" target="_blank">Deribit</a> (DVOL + options chain) ·
+    <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> (Fear & Greed Index)<br>
+    <span style="margin-top:6px;display:block">All data from free public APIs, updated in real-time. Not investment advice.</span>
+    <span style="margin-top:8px;display:block">Made by <a href="https://x.com/0xReggieJ" target="_blank" style="color:var(--blue);text-decoration:none">@0xReggieJ</a> 🐦</span>
+  </div>
+</div>
+
+<script src="../app.js"></script>
+<script>initApp('en');</script>
+</body>
+</html>

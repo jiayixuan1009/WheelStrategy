@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="canonical" href="https://cryptooptiontool.com/" />
+<link rel="alternate" hreflang="zh" href="https://cryptooptiontool.com/" />
+<link rel="alternate" hreflang="en" href="https://cryptooptiontool.com/en/" />
+<link rel="alternate" hreflang="x-default" href="https://cryptooptiontool.com/" />
+<meta name="description" content="BTC 轮动期权助手 — 实时 DVOL、恐惧贪婪指数、期权链筛选与 Wheel 策略入场信号，帮你用期权在 BTC 上赚取被动收入。" />
+<meta property="og:title" content="雷吉的轮动期权助手 · BTC Wheel Strategy" />
+<meta property="og:description" content="BTC 轮动期权助手 — 实时 DVOL、恐惧贪婪指数、期权链筛选与 Wheel 策略入场信号" />
+<meta property="og:url" content="https://cryptooptiontool.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:locale:alternate" content="en_US" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@0xReggieJ" />
+<title>雷吉的轮动期权助手 · Wheel Strategy</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─── Reset & Base ─── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--card:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;
+  --green:#3fb950;--red:#f85149;--blue:#58a6ff;
+  --orange:#d29922;--purple:#a371f7;--yellow:#e3b341;
+  --put:#e3b341;--call:#a371f7;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.6}
+a{color:var(--blue);text-decoration:none}
+
+/* ─── Layout ─── */
+.container{max-width:1200px;margin:0 auto;padding:0 16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+/* ─── Header ─── */
+.header{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;padding:12px 0}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+.btc-price-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btc-price{font-size:22px;font-weight:700;color:var(--yellow)}
+.price-change{font-size:13px;padding:3px 8px;border-radius:4px;font-weight:600}
+.price-change.up{background:rgba(63,185,80,.15);color:var(--green)}
+.price-change.down{background:rgba(248,81,73,.15);color:var(--red)}
+.last-update{color:var(--muted);font-size:12px}
+
+/* ─── Cards ─── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.card-title{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* ─── Decision Card ─── */
+.decision-card{border:2px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;text-align:center;transition:border-color .3s}
+.decision-card.sell-put{border-color:var(--put)}
+.decision-card.sell-call{border-color:var(--call)}
+.decision-card.wait{border-color:var(--border)}
+.decision-badge{display:inline-block;padding:10px 28px;border-radius:30px;font-size:24px;font-weight:800;letter-spacing:1px;margin:12px 0}
+.decision-badge.sell-put{background:rgba(227,179,65,.15);color:var(--put);border:2px solid var(--put)}
+.decision-badge.sell-call{background:rgba(163,113,247,.15);color:var(--call);border:2px solid var(--call)}
+.decision-badge.wait{background:rgba(139,148,158,.1);color:var(--muted);border:2px solid var(--border)}
+.decision-reason{color:var(--muted);font-size:13px;margin-top:8px}
+.position-toggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.pos-btn{padding:8px 20px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:13px;transition:all .2s}
+.pos-btn.active{border-color:var(--blue);color:var(--blue);background:rgba(88,166,255,.1)}
+
+/* ─── Wheel Flow ─── */
+.wheel-flow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;padding:8px 0}
+.wheel-node{text-align:center;padding:12px 16px;border-radius:10px;min-width:110px}
+.wheel-node.usdt{background:rgba(63,185,80,.1);border:1.5px solid var(--green)}
+.wheel-node.btc{background:rgba(227,179,65,.1);border:1.5px solid var(--yellow)}
+.wheel-node.action-put{background:rgba(227,179,65,.08);border:1.5px dashed var(--put)}
+.wheel-node.action-call{background:rgba(163,113,247,.08);border:1.5px dashed var(--call)}
+.wheel-node-title{font-weight:700;font-size:13px}
+.wheel-node-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.wheel-arrow{color:var(--muted);font-size:20px;padding:0 6px;flex-shrink:0}
+.wheel-arrow.you{color:var(--blue);font-weight:700}
+.you-label{font-size:10px;color:var(--blue);text-align:center;margin-top:-4px}
+
+/* ─── Signal Bars ─── */
+.signal-bar{margin-bottom:14px}
+.signal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.signal-label{font-size:13px}
+.signal-value{font-size:12px;color:var(--muted)}
+.bar-track{background:#1f2937;border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.bar-fill.green{background:var(--green)}
+.bar-fill.orange{background:var(--orange)}
+.bar-fill.red{background:var(--red)}
+.bar-fill.gray{background:var(--muted)}
+
+/* ─── Score Ring ─── */
+.score-ring-wrap{text-align:center;padding:8px}
+.score-num{font-size:42px;font-weight:800;line-height:1}
+.score-label{font-size:12px;color:var(--muted);margin-top:4px}
+.score-desc{font-size:12px;margin-top:6px;padding:4px 10px;border-radius:20px;display:inline-block}
+.score-desc.high{background:rgba(63,185,80,.15);color:var(--green)}
+.score-desc.mid{background:rgba(210,153,34,.15);color:var(--orange)}
+.score-desc.low{background:rgba(139,148,158,.1);color:var(--muted)}
+
+/* ─── Tabs ─── */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;gap:4px}
+.tab-btn{padding:9px 20px;border:none;background:none;color:var(--muted);cursor:pointer;font-size:13px;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--blue)}
+.tab-btn.put-tab.active{color:var(--put);border-bottom-color:var(--put)}
+.tab-btn.call-tab.active{color:var(--call);border-bottom-color:var(--call)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ─── Options Table ─── */
+.options-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filter-group{display:flex;align-items:center;gap:6px}
+.filter-group label{font-size:12px;color:var(--muted)}
+.filter-group select,.filter-group input{background:#1f2937;border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px}
+.options-table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:8px 10px;text-align:left;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer}
+th:hover{color:var(--text)}
+td{padding:9px 10px;border-bottom:1px solid rgba(48,54,61,.5);white-space:nowrap}
+tr:hover td{background:rgba(255,255,255,.03)}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600}
+.badge.rec{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.badge.caution{background:rgba(210,153,34,.15);color:var(--orange)}
+.badge.risky{background:rgba(248,81,73,.15);color:var(--red)}
+.yield-good{color:var(--green);font-weight:600}
+.yield-mid{color:var(--orange)}
+.yield-low{color:var(--muted)}
+
+/* ─── Risk Calculator ─── */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.calc-grid{grid-template-columns:1fr}}
+.input-group{margin-bottom:12px}
+.input-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.input-group input,.input-group select{width:100%;background:#1f2937;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px}
+.result-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(48,54,61,.4);font-size:13px}
+.result-row:last-child{border-bottom:none}
+.result-key{color:var(--muted)}
+.result-val{font-weight:600}
+.result-val.green{color:var(--green)}
+.result-val.red{color:var(--red)}
+.pnl-canvas-wrap{position:relative;height:160px;margin-top:8px}
+
+/* ─── Charts ─── */
+.chart-wrap{position:relative;height:200px}
+.chart-wrap-tall{position:relative;height:320px}
+
+/* ─── Rainbow Band Indicator ─── */
+.rainbow-band-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-top:10px}
+.rainbow-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.rl-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+.rl-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ─── Metrics Row ─── */
+.metric-card{background:#1f2937;border-radius:8px;padding:14px;text-align:center}
+.metric-val{font-size:22px;font-weight:700;margin:4px 0}
+.metric-label{font-size:11px;color:var(--muted)}
+.metric-sub{font-size:11px;margin-top:2px}
+
+/* ─── Education Accordion ─── */
+.accordion{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.accordion-header{padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;background:var(--card)}
+.accordion-header:hover{background:#1f2937}
+.accordion-arrow{transition:transform .3s;color:var(--muted)}
+.accordion-body{display:none;padding:16px;background:#0d1117;font-size:13px;color:var(--muted);line-height:1.8;border-top:1px solid var(--border)}
+.accordion-body.open{display:block}
+.accordion-body ul{padding-left:18px;margin:8px 0}
+.accordion-body li{margin-bottom:4px}
+.accordion-body strong{color:var(--text)}
+.example-box{background:var(--card);border-radius:6px;padding:12px;margin-top:10px;font-size:12px;font-family:monospace;line-height:1.9}
+
+/* ─── Status ─── */
+.loading{display:inline-block;width:10px;height:10px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:6px}
+.tag.green{background:rgba(63,185,80,.15);color:var(--green)}
+.tag.red{background:rgba(248,81,73,.15);color:var(--red)}
+.tag.gray{background:#1f2937;color:var(--muted)}
+.empty-row td{text-align:center;color:var(--muted);padding:24px}
+
+/* ─── Help Tooltip ─── */
+.help-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(88,166,255,.12);color:var(--blue);font-size:11px;font-weight:700;cursor:help;margin-left:auto;flex-shrink:0;line-height:1;border:1px solid rgba(88,166,255,.25);transition:all .2s}
+.help-tip:hover{background:rgba(88,166,255,.25);border-color:var(--blue)}
+.help-tip .tip-text{visibility:hidden;opacity:0;position:absolute;z-index:200;right:0;top:calc(100% + 8px);width:280px;background:#1f2937;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12px;font-weight:400;color:var(--text);line-height:1.7;text-transform:none;letter-spacing:0;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;transition:opacity .2s,visibility .2s}
+.help-tip:hover .tip-text{visibility:visible;opacity:1;pointer-events:auto}
+.tip-text strong{color:var(--blue)}
+.tip-text .tip-title{font-weight:700;color:var(--yellow);margin-bottom:6px;font-size:13px}
+@media(max-width:768px){.help-tip .tip-text{width:240px;right:-20px}}
+
+/* ─── Footer ─── */
+.footer{text-align:center;padding:24px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:24px}
+.disclaimer{background:rgba(210,153,34,.08);border:1px solid rgba(210,153,34,.3);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--orange);margin-bottom:16px}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">🎡 雷吉的轮动期权助手 <a href="about.html" style="font-size:12px;color:var(--muted);font-weight:400;margin-left:8px;border:1px solid var(--border);padding:2px 10px;border-radius:12px">关于</a></div>
+      <div class="btc-price-bar">
+        <a href="en/" style="font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 10px;border-radius:12px;margin-right:8px">EN</a>
+        <span class="btc-price" id="btcPrice">加载中…</span>
+        <span class="price-change" id="priceChange1h">1h</span>
+        <span class="price-change" id="priceChange24h">24h</span>
+        <span class="last-update" id="lastUpdate"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container" style="padding-top:20px">
+
+  <!-- ═══ DISCLAIMER ═══ -->
+  <div class="disclaimer">⚠️ 本工具仅供参考，不构成投资建议。期权交易存在较大风险，请在充分了解风险后谨慎操作。</div>
+
+  <!-- ═══ MAIN DECISION CARD ═══ -->
+  <div class="card" style="padding:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px"><span>📍 我现在应该做什么？</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>这是综合所有指标后给出的<strong>一句话建议</strong>。黄色边框 = 建议卖 Put，紫色 = 建议卖 Call，灰色 = 观望。<br><br><strong>怎么用？</strong>先用上方按钮选择你当前持有什么（USDT 或 BTC），系统会根据你的持仓给出对应的操作建议。下方 4 个指标卡是支撑决策的核心数据。</span></span></span></div>
+        <div style="font-size:12px;color:var(--muted)">根据当前市场指标综合判断</div>
+      </div>
+      <div class="position-toggle">
+        <button class="pos-btn active" id="posUsdt" onclick="setPosition('usdt')">💵 我有 USDT</button>
+        <button class="pos-btn" id="posBtc" onclick="setPosition('btc')">₿ 我持有 BTC</button>
+      </div>
+    </div>
+    <div id="decisionCard" class="decision-card wait">
+      <div style="color:var(--muted);font-size:13px">正在加载市场数据…</div>
+      <div id="decisionBadge" class="decision-badge wait"><span class="loading"></span><span>分析中</span></div>
+      <div id="decisionReason" class="decision-reason"></div>
+    </div>
+    <!-- Key metrics row -->
+    <div class="grid-4" style="margin-top:14px">
+      <div class="metric-card">
+        <div class="metric-label">DVOL（波动率指数）</div>
+        <div class="metric-val" id="dvolNow">--</div>
+        <div class="metric-sub" id="dvolChange">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">IVP（历史百分位）</div>
+        <div class="metric-val" id="ivpNow">--%</div>
+        <div class="metric-sub" id="ivpDesc" style="color:var(--muted)">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">恐惧贪婪指数</div>
+        <div class="metric-val" id="fngNow">--</div>
+        <div class="metric-sub" id="fngDesc" style="color:var(--muted)">--</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">BTC 1h 涨跌</div>
+        <div class="metric-val" id="btc1h">--%</div>
+        <div class="metric-sub" style="color:var(--muted)">vs 1小时前</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ WHEEL STRATEGY FLOW ═══ -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--blue)"></span><span>Wheel 轮动策略 — 完整循环</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>这是 Wheel 策略的完整循环流程图。从左到右跟着箭头走：<strong>有 USDT → 卖 Put → 被行权持有 BTC → 卖 Call → 被行权回到 USDT</strong>。每一步都收权利金，循环往复。<br><br><strong>怎么用？</strong>看你当前处于流程的哪个位置，然后参考下方信号面板决定下一步。</span></span></span></div>
+    <div class="wheel-flow" id="wheelFlow">
+      <div class="wheel-node usdt">
+        <div class="wheel-node-title">💵 有 USDT</div>
+        <div class="wheel-node-sub">闲置资金</div>
+      </div>
+      <div><div class="wheel-arrow">→</div></div>
+      <div class="wheel-node action-put">
+        <div class="wheel-node-title" style="color:var(--put)">卖出 Put</div>
+        <div class="wheel-node-sub">收取权利金</div>
+      </div>
+      <div>
+        <div class="wheel-arrow">→</div>
+        <div style="font-size:10px;color:var(--green);text-align:center">被行权</div>
+      </div>
+      <div class="wheel-node btc">
+        <div class="wheel-node-title">₿ 持有 BTC</div>
+        <div class="wheel-node-sub">低价买入</div>
+      </div>
+      <div><div class="wheel-arrow">→</div></div>
+      <div class="wheel-node action-call">
+        <div class="wheel-node-title" style="color:var(--call)">卖出 Call</div>
+        <div class="wheel-node-sub">收取权利金</div>
+      </div>
+      <div>
+        <div class="wheel-arrow">→</div>
+        <div style="font-size:10px;color:var(--green);text-align:center">被行权</div>
+      </div>
+      <div class="wheel-node usdt">
+        <div class="wheel-node-title">💵 有 USDT</div>
+        <div class="wheel-node-sub">高价卖出 ✅</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:10px">每一步都收取权利金，无论是否被行权都有额外收益 💰</div>
+  </div>
+
+  <!-- ═══ SIGNAL PANELS ═══ -->
+  <div class="grid-2">
+    <!-- Sell Put Signals -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--put)"></span><span>Sell Put 入场信号</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>3 个进度条代表 3 个入场条件：<strong>BTC 急跌、DVOL 飙升、IVP 高位</strong>。进度越满（越绿）说明条件越成熟。下方评分 0-100 是综合得分。<br><br><strong>怎么用？</strong>评分 ≥65 时是较好的卖 Put 时机（波动率高 = 权利金丰厚）。低于 35 建议观望。</span></span></span></div>
+      <div id="putSignals">
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">① BTC 1h 急跌程度</span><span class="signal-value" id="sig-drop-val">-- / 需≥2.5%</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-drop-bar" style="width:0%"></div></div>
+        </div>
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">② DVOL 1h 恐慌上升</span><span class="signal-value" id="sig-dvol-val">-- / 需≥5%</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-dvol-bar" style="width:0%"></div></div>
+        </div>
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">③ 波动率历史高位（IVP）</span><span class="signal-value" id="sig-ivp-val">-- / 需≥70</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-ivp-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <hr style="border-color:var(--border);margin:14px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="score-ring-wrap">
+          <div class="score-num" id="putScore" style="color:var(--put)">--</div>
+          <div class="score-label">/ 100 综合评分</div>
+          <div class="score-desc low" id="putScoreDesc">加载中</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);max-width:200px;text-align:right" id="putAdvice">
+          满足 3 个条件时急跌是入场信号，波动率高时权利金更丰厚。
+        </div>
+      </div>
+    </div>
+
+    <!-- Covered Call Signals -->
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--call)"></span><span>Covered Call 入场信号</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>3 个条件：<strong>DVOL 高、市场偏贪婪、BTC 近期上涨</strong>。条件满足时适合卖出 Call 锁定利润。<br><br><strong>怎么用？</strong>持有 BTC 时使用。评分 ≥65 建议卖 Call，在高位收取权利金。市场恐慌时不适合卖 Call。</span></span></span></div>
+      <div id="callSignals">
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">① DVOL 绝对值（越高越好）</span><span class="signal-value" id="sig-cc-dvol-val">-- / 建议≥50</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-cc-dvol-bar" style="width:0%"></div></div>
+        </div>
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">② 恐惧贪婪偏贪婪（顶部区域）</span><span class="signal-value" id="sig-cc-fng-val">-- / 建议≥60</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-cc-fng-bar" style="width:0%"></div></div>
+        </div>
+        <div class="signal-bar">
+          <div class="signal-header"><span class="signal-label">③ BTC 近期上涨（靠近阻力位）</span><span class="signal-value" id="sig-cc-rise-val">-- / 1h ≥1%</span></div>
+          <div class="bar-track"><div class="bar-fill gray" id="sig-cc-rise-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <hr style="border-color:var(--border);margin:14px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="score-ring-wrap">
+          <div class="score-num" id="callScore" style="color:var(--call)">--</div>
+          <div class="score-label">/ 100 综合评分</div>
+          <div class="score-desc low" id="callScoreDesc">加载中</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);max-width:200px;text-align:right">
+          持有 BTC 时卖出 Call，在高点附近锁定利润，同时赚取权利金。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OPTIONS TABLE + RISK CALC ═══ -->
+  <div class="card">
+    <div class="tabs">
+      <button class="tab-btn put-tab active" onclick="switchTab('options','put')">📋 Sell Put 合约选择</button>
+      <button class="tab-btn call-tab" onclick="switchTab('options','call')">📋 Covered Call 合约选择</button>
+      <button class="tab-btn" onclick="switchTab('options','calc')">🧮 盈亏计算器</button>
+      <span class="help-tip" style="margin-left:auto;margin-bottom:1px">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>Sell Put 表：列出可卖的看跌期权，按年化收益排序。关注 Delta（越小越安全）和年化收益率。<br>Covered Call 表：列出可卖的看涨期权，逻辑类似。<br>盈亏计算器：输入参数后可视化你的盈亏曲线。<br><br><strong>怎么用？</strong>用上方筛选条件找合适的合约。新手选 Delta ≤0.20、到期 14-21 天的。绿色「保守推荐」标签是最安全的选择。</span></span></span>
+    </div>
+
+    <!-- PUT TABLE -->
+    <div class="tab-content active" id="options-tab-put">
+      <div class="options-filters">
+        <div class="filter-group"><label>最短到期（天）</label><input type="number" id="put-min-days" value="7" min="1" max="90" style="width:60px" onchange="renderPutTable()"></div>
+        <div class="filter-group"><label>最长到期（天）</label><input type="number" id="put-max-days" value="45" min="1" max="180" style="width:60px" onchange="renderPutTable()"></div>
+        <div class="filter-group"><label>最低年化收益率</label><input type="number" id="put-min-yield" value="5" min="0" step="1" style="width:60px" onchange="renderPutTable()"><span style="color:var(--muted)">%</span></div>
+        <div class="filter-group"><label>风险偏好</label>
+          <select id="put-risk" onchange="renderPutTable()">
+            <option value="all">全部</option>
+            <option value="conservative" selected>保守（Delta &lt;0.25）</option>
+            <option value="moderate">适中（Delta &lt;0.40）</option>
+          </select>
+        </div>
+      </div>
+      <div class="options-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTable('put','strike')">行权价 ↕</th>
+              <th onclick="sortTable('put','expiry')">到期日 ↕</th>
+              <th>天数</th>
+              <th onclick="sortTable('put','delta')">Delta ↕</th>
+              <th>隐含波动率</th>
+              <th onclick="sortTable('put','yield')">年化收益 ↕</th>
+              <th>权利金（BTC）</th>
+              <th>盈亏平衡</th>
+              <th>评级</th>
+            </tr>
+          </thead>
+          <tbody id="put-tbody">
+            <tr class="empty-row"><td colspan="9"><span class="loading"></span><span>加载期权数据中…</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px">💡 <strong style="color:var(--text)">新手建议</strong>：选 Delta 在 -0.20 左右、到期 14-21 天的合约，被行权概率约 20%，风险可控。</div>
+    </div>
+
+    <!-- CALL TABLE -->
+    <div class="tab-content" id="options-tab-call">
+      <div class="options-filters">
+        <div class="filter-group"><label>最短到期（天）</label><input type="number" id="call-min-days" value="7" min="1" max="90" style="width:60px" onchange="renderCallTable()"></div>
+        <div class="filter-group"><label>最长到期（天）</label><input type="number" id="call-max-days" value="45" min="1" max="180" style="width:60px" onchange="renderCallTable()"></div>
+        <div class="filter-group"><label>最低年化收益率</label><input type="number" id="call-min-yield" value="5" min="0" step="1" style="width:60px" onchange="renderCallTable()"><span style="color:var(--muted)">%</span></div>
+        <div class="filter-group"><label>风险偏好</label>
+          <select id="call-risk" onchange="renderCallTable()">
+            <option value="all">全部</option>
+            <option value="conservative" selected>保守（Delta &lt;0.25）</option>
+            <option value="moderate">适中（Delta &lt;0.40）</option>
+          </select>
+        </div>
+      </div>
+      <div class="options-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTable('call','strike')">行权价 ↕</th>
+              <th onclick="sortTable('call','expiry')">到期日 ↕</th>
+              <th>天数</th>
+              <th onclick="sortTable('call','delta')">Delta ↕</th>
+              <th>隐含波动率</th>
+              <th onclick="sortTable('call','yield')">年化收益 ↕</th>
+              <th>权利金（BTC）</th>
+              <th>被行权价格</th>
+              <th>评级</th>
+            </tr>
+          </thead>
+          <tbody id="call-tbody">
+            <tr class="empty-row"><td colspan="9"><span class="loading"></span><span>加载期权数据中…</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px">💡 <strong style="color:var(--text)">新手建议</strong>：选 Delta 在 0.20 左右、到期 14-21 天的合约，设在当前价格 10-20% 以上的行权价。</div>
+    </div>
+
+    <!-- RISK CALCULATOR -->
+    <div class="tab-content" id="options-tab-calc">
+      <div class="calc-grid">
+        <div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px">输入参数</div>
+          <div class="input-group">
+            <label>策略类型</label>
+            <select id="calc-type" onchange="updateCalc()">
+              <option value="put">Sell Put（卖出看跌期权）</option>
+              <option value="call">Covered Call（备兑看涨期权）</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>我的资金（USDT）</label>
+            <input type="number" id="calc-capital" value="10000" onchange="updateCalc()">
+          </div>
+          <div class="input-group">
+            <label id="calc-strike-label">行权价（USD）</label>
+            <input type="number" id="calc-strike" value="75000" onchange="updateCalc()">
+          </div>
+          <div class="input-group">
+            <label>合约到期（天）</label>
+            <input type="number" id="calc-days" value="14" onchange="updateCalc()">
+          </div>
+          <div class="input-group">
+            <label>权利金（每张，USDT）</label>
+            <input type="number" id="calc-premium" value="400" onchange="updateCalc()">
+          </div>
+          <div class="input-group">
+            <label>BTC 当前价格（自动填入）</label>
+            <input type="number" id="calc-btc-price" value="80000" onchange="updateCalc()">
+          </div>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px">计算结果</div>
+          <div id="calc-results">
+            <div class="result-row"><span class="result-key">最大收益（权利金）</span><span class="result-val green" id="res-max-profit">--</span></div>
+            <div class="result-row"><span class="result-key">最大亏损</span><span class="result-val red" id="res-max-loss">--</span></div>
+            <div class="result-row"><span class="result-key">盈亏平衡点</span><span class="result-val" id="res-breakeven">--</span></div>
+            <div class="result-row"><span class="result-key">保证金占用（约）</span><span class="result-val" id="res-margin">--</span></div>
+            <div class="result-row"><span class="result-key">预期年化收益率</span><span class="result-val green" id="res-annual">--</span></div>
+            <div class="result-row"><span class="result-key">被行权概率（约）</span><span class="result-val" id="res-prob">--</span></div>
+          </div>
+          <div style="margin-top:14px;font-size:13px;font-weight:600;margin-bottom:6px">盈亏图（到期时）</div>
+          <div class="pnl-canvas-wrap">
+            <canvas id="pnlChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CHARTS ═══ -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--blue)"></span><span>DVOL 波动率指数（90天）</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>DVOL 是 Deribit 的 BTC 波动率指数，类似股市的 VIX。<strong>数值越高 = 市场预期波动越大 = 期权越贵</strong>。<br>• 50 以下：偏低，卖方收益一般<br>• 50-80：适中<br>• 80 以上：极高，卖方黄金期<br><br><strong>怎么用？</strong>DVOL 高时卖期权权利金更丰厚。图表帮你判断当前处于 90 天内的什么位置。</span></span></span></div>
+      <div class="chart-wrap"><canvas id="dvolChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--orange)"></span><span>恐惧贪婪指数（90天）</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>0-100 的情绪指标。<strong>0 = 极度恐慌，100 = 极度贪婪</strong>。<br>• 红色柱（≤25）：市场恐慌，适合卖 Put<br>• 橙色柱（25-75）：中性<br>• 绿色柱（≥75）：市场贪婪，适合卖 Call<br><br><strong>怎么用？</strong>恐慌时卖 Put（别人恐惧你贪婪），贪婪时卖 Call（在高位锁利润）。</span></span></span></div>
+      <div class="chart-wrap"><canvas id="fngChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ═══ RAINBOW CHART ═══ -->
+  <div class="card">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div>
+        <div class="card-title" style="margin-bottom:4px"><span class="dot" style="background:linear-gradient(90deg,#3F51B5,#4CAF50,#FF5722)"></span><span>BTC 彩虹图（对数回归）</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>彩虹图用对数回归模型将 BTC 价格分为 9 个色带区间：<br>• <strong>蓝色区</strong>：极度低估，历史最佳买点<br>• <strong>绿色区</strong>：合理估值，HODL 区<br>• <strong>红色区</strong>：极度泡沫，考虑减仓<br><br><strong>怎么用？</strong>右上角显示当前 BTC 所在区间。<strong>蓝/绿区卖 Put 更安全</strong>（跌到行权价也是低估买入），<strong>橙/红区卖 Call 更合适</strong>（高估区锁定利润）。</span></span></span></div>
+        <div style="font-size:12px;color:var(--muted)">基于对数回归模型，判断当前价格处于历史估值的哪个区间</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">当前所在区间</div>
+        <div id="rainbowBandBadge" class="rainbow-band-badge" style="background:rgba(139,148,158,0.15);color:var(--muted);border:1.5px solid var(--border)">
+          <span id="rainbowBandDot" style="width:10px;height:10px;border-radius:50%;background:var(--muted);display:inline-block"></span>
+          <span id="rainbowBandName">加载中…</span>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap-tall"><canvas id="rainbowChart"></canvas></div>
+    <div class="rainbow-legend" id="rainbowLegend">
+      <!-- 9 bands legend, rendered by JS -->
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">
+      📐 模型参数：log₁₀(price) = 5.845 × log₁₀(距创世日天数) + b，参考 blockchaincenter.net 方法论。白线 = BTC 月收盘价。
+    </div>
+  </div>
+
+  <!-- ═══ EDUCATION ═══ -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--green)"></span><span>新手教程 — 读懂再操作</span><span class="help-tip">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>4 个可展开的教程，点击标题即可展开/收起。建议<strong>从上到下按顺序阅读</strong>。<br><br><strong>怎么用？</strong>如果你是期权新手，请先完整阅读这些教程再做任何操作。里面有具体的数字举例帮助理解。</span></span></span></div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        🎡 什么是 Wheel（轮动）策略？
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <p>Wheel 策略是一种<strong>通过反复卖出期权来被动赚取权利金</strong>的方法，适合长期看好 BTC 的投资者。</p>
+        <ul>
+          <li><strong>第一步（有 USDT 时）：</strong>卖出低于当前价格的 Put 期权，收取权利金</li>
+          <li><strong>被行权时：</strong>以行权价买入 BTC（比你预计更便宜），同时已收了权利金</li>
+          <li><strong>持有 BTC 时：</strong>卖出高于当前价格的 Call 期权，继续收权利金</li>
+          <li><strong>被行权时：</strong>以行权价卖出 BTC（比你预计更高），再次获利，回到有 USDT 的状态</li>
+        </ul>
+        <p style="margin-top:8px">核心思路：<strong>无论涨跌，每步都能收权利金</strong>。当然，如果 BTC 大幅暴跌，持有 BTC 的账面亏损会超过权利金收入，这是最主要的风险。</p>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        💛 Sell Put 详解（有 USDT 时用）
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <p><strong>卖出看跌期权</strong>：你卖给别人一个权利，对方可以在到期前以行权价把 BTC 卖给你。</p>
+        <div class="example-box">
+          📌 举例：BTC 现价 $80,000<br>
+          你卖出一张 行权价 $75,000、14 天后到期的 Put<br>
+          收到权利金：$400<br><br>
+          情况一（BTC 到期 > $75,000）：期权作废 ✅ 你净赚 $400<br>
+          情况二（BTC 到期 = $73,000）：你被迫用 $75,000 买入 BTC<br>
+          &nbsp;&nbsp;但实际成本 = $75,000 - $400 = $74,600<br>
+          &nbsp;&nbsp;账面浮亏：$73,000 - $74,600 = -$1,600
+        </div>
+        <ul style="margin-top:10px">
+          <li><strong>最大收益：</strong>权利金（BTC 未跌至行权价）</li>
+          <li><strong>最大亏损：</strong>行权价 × 合约数量（BTC 跌至 0，极端情况）</li>
+          <li><strong>建议：</strong>行权价选在当前价格 10-20% 以下，Delta 约 -0.20</li>
+        </ul>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        💜 Covered Call 详解（持有 BTC 时用）
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <p><strong>备兑看涨期权</strong>：持有 BTC 的情况下，卖出高于当前价格的 Call 期权，用持仓作担保。</p>
+        <div class="example-box">
+          📌 举例：你持有 1 BTC，现价 $80,000<br>
+          你卖出一张 行权价 $90,000、21 天后到期的 Call<br>
+          收到权利金：$600<br><br>
+          情况一（BTC 到期 < $90,000）：期权作废 ✅ 你净赚 $600，BTC 照持<br>
+          情况二（BTC 到期 = $95,000）：你被迫以 $90,000 卖出 BTC<br>
+          &nbsp;&nbsp;实际卖出价 = $90,000 + $600 = $90,600<br>
+          &nbsp;&nbsp;虽然错过了 $95,000，但比没卖 Call 多赚了 $600
+        </div>
+        <ul style="margin-top:10px">
+          <li><strong>最大收益：</strong>（行权价 - 买入成本）× 合约数 + 权利金</li>
+          <li><strong>主要风险：</strong>BTC 暴跌时，权利金不足以覆盖持仓亏损</li>
+          <li><strong>建议：</strong>行权价选在当前价格 10-20% 以上，Delta 约 0.20</li>
+        </ul>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        📊 如何看懂 Delta / IV / IVP 等指标？
+        <span class="accordion-arrow">▼</span>
+      </div>
+      <div class="accordion-body">
+        <ul>
+          <li><strong>Delta（-1 到 0 / 0 到 1）：</strong>反映被行权的概率。Put 的 Delta -0.20 意味着约 20% 概率被行权。越接近 0 越安全，收益也越低。</li>
+          <li><strong>IV（隐含波动率）：</strong>市场预期 BTC 未来波动幅度。IV 越高，期权越贵，卖方收益越高。</li>
+          <li><strong>DVOL：</strong>Deribit 的 BTC 波动率指数，类似股市的 VIX。50 以下偏低，80 以上偏高。</li>
+          <li><strong>IVP（IV 历史百分位）：</strong>当前 DVOL 在过去一年处于多少百分位。IVP > 70 说明波动率处于历史高位，是卖出期权的好时机。</li>
+          <li><strong>Theta：</strong>每天因时间流逝损失的期权价值。作为卖方，Theta 是你的朋友——每天都在帮你赚钱。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>数据来源：</span><a href="https://www.binance.com" target="_blank">Binance</a><span>（BTC价格）</span>·
+    <a href="https://www.deribit.com" target="_blank">Deribit</a><span>（DVOL + 期权链）</span>·
+    <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a><span>（恐惧贪婪指数）</span><br>
+    <span style="margin-top:6px;display:block">以上数据均来自免费公开 API，实时更新。本工具不构成投资建议。</span>
+    <span style="margin-top:8px;display:block">Made by <a href="https://x.com/0xReggieJ" target="_blank" style="color:var(--blue);text-decoration:none">@0xReggieJ</a> 🐦</span>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>initApp('zh');</script>
+</body>
+</html>
