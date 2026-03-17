@@ -1,0 +1,7 @@
+# 将带 .html 的地址 301 重定向到无后缀的干净 URL
+/cn/index.html    /cn/    301
+/en/index.html    /en/    301
+/cn/about.html    /cn/about/    301
+/en/about.html    /en/about/    301
+/index.html       /    301
+/about.html       /cn/about/    301

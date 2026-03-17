@@ -1,0 +1,10 @@
+# 将带 .html 的地址 301 重定向到无后缀的干净 URL
+RewriteEngine On
+RewriteBase /
+
+RewriteRule ^cn/index\.html$ /cn/ [R=301,L]
+RewriteRule ^en/index\.html$ /en/ [R=301,L]
+RewriteRule ^cn/about\.html$ /cn/about/ [R=301,L]
+RewriteRule ^en/about\.html$ /en/about/ [R=301,L]
+RewriteRule ^index\.html$ / [R=301,L]
+RewriteRule ^about\.html$ /cn/about/ [R=301,L]

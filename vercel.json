@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    { "source": "/cn/index.html", "destination": "/cn/", "permanent": true },
+    { "source": "/en/index.html", "destination": "/en/", "permanent": true },
+    { "source": "/cn/about.html", "destination": "/cn/about/", "permanent": true },
+    { "source": "/en/about.html", "destination": "/en/about/", "permanent": true },
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/about.html", "destination": "/cn/about/", "permanent": true }
+  ]
+}

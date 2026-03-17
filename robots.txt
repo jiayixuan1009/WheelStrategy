@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://cryptooptiontool.com/sitemap.xml
+Sitemap: https://wheel.cryptooptiontool.com/sitemap.xml

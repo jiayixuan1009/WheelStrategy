@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About · Reggie's Wheel Strategy Assistant</title>
+<link rel="canonical" href="https://wheel.cryptooptiontool.com/en/about/" />
+<link rel="alternate" hreflang="zh" href="https://wheel.cryptooptiontool.com/cn/about/" />
+<link rel="alternate" hreflang="en" href="https://wheel.cryptooptiontool.com/en/about/" />
+<link rel="alternate" hreflang="x-default" href="https://wheel.cryptooptiontool.com/cn/about/" />
+<meta name="description" content="About Reggie's Wheel Strategy Assistant — a real-time BTC options decision tool using the Wheel strategy for passive income." />
+<meta property="og:title" content="About · Reggie's Wheel Strategy Assistant" />
+<meta property="og:description" content="A real-time BTC options tool that helps you earn passive income using the Wheel strategy." />
+<meta property="og:url" content="https://wheel.cryptooptiontool.com/en/about/" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:locale:alternate" content="zh_CN" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content="@0xReggieJ" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--card:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;
+  --green:#3fb950;--red:#f85149;--blue:#58a6ff;
+  --orange:#d29922;--purple:#a371f7;--yellow:#e3b341;
+  --put:#e3b341;--call:#a371f7;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.8}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.container{max-width:760px;margin:0 auto;padding:0 20px}
+
+/* Header */
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 0}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);text-decoration:none}
+.logo:hover{text-decoration:none;color:var(--yellow)}
+.back-link{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:4px;transition:color .2s}
+.back-link:hover{color:var(--blue);text-decoration:none}
+
+/* Content */
+.hero{text-align:center;padding:48px 0 32px}
+.hero h1{font-size:28px;font-weight:800;margin-bottom:8px}
+.hero .subtitle{font-size:15px;color:var(--muted);max-width:500px;margin:0 auto}
+
+.section{margin-bottom:36px}
+.section h2{font-size:18px;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.section p{color:var(--text);margin-bottom:12px}
+
+blockquote{border-left:3px solid var(--yellow);padding:12px 16px;margin:16px 0;background:rgba(227,179,65,.06);border-radius:0 8px 8px 0;font-size:14px;color:var(--text);line-height:1.8}
+
+/* Feature grid */
+.features{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+@media(max-width:600px){.features{grid-template-columns:1fr}}
+.feat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.feat-icon{font-size:20px;margin-bottom:6px}
+.feat-title{font-weight:700;font-size:14px;margin-bottom:4px}
+.feat-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* Audience tags */
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.tag{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;border:1px solid}
+.tag.yes{background:rgba(63,185,80,.1);border-color:rgba(63,185,80,.3);color:var(--green)}
+.tag.no{background:rgba(248,81,73,.08);border-color:rgba(248,81,73,.2);color:var(--red)}
+
+/* Data sources */
+.sources{display:flex;gap:20px;flex-wrap:wrap;margin:12px 0}
+.source{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.source-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Risk box */
+.risk-box{background:rgba(210,153,34,.08);border:1px solid rgba(210,153,34,.3);border-radius:8px;padding:14px 18px;font-size:13px;color:var(--orange);line-height:1.8;margin:20px 0}
+
+/* CTA */
+.cta{text-align:center;padding:32px 0}
+.cta-btn{display:inline-block;padding:12px 32px;border-radius:30px;font-size:15px;font-weight:700;color:var(--bg);background:var(--blue);transition:all .2s;text-decoration:none}
+.cta-btn:hover{background:#79b8ff;text-decoration:none}
+
+/* Footer */
+.footer{text-align:center;padding:24px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:24px}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="container">
+    <div class="header-inner">
+      <a href="../" class="logo">🎡 Reggie's Wheel Strategy Assistant</a>
+      <div style="display:flex;align-items:center;gap:12px">
+        <a href="../../cn/about/" style="font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 10px;border-radius:12px">中文</a>
+        <a href="../" class="back-link">← Back to Tool</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="hero">
+    <h1>🎡 About This Project</h1>
+    <div class="subtitle">A real-time decision tool to help you earn passive income on BTC using the Wheel options strategy</div>
+  </div>
+
+  <!-- Why We Built This -->
+  <div class="section">
+    <h2>💡 Why We Built This</h2>
+    <p>You might be familiar with spot trading, futures, or even DeFi farming, but "options" sounds like another language — Greek letters, implied volatility, strike prices...</p>
+    <p>In fact, there's an options strategy called <strong>Wheel</strong> that's incredibly simple:</p>
+    <blockquote>
+      When you have USDT, sell Puts (get paid to wait for a dip). When you hold BTC, sell Calls (get paid to wait for a pump). <strong>No matter what the market does, you collect "premium" at every step — free extra income.</strong>
+    </blockquote>
+    <p>The question is: when to sell? Which contract? Is volatility high enough? Is the market fearful or greedy?</p>
+    <p>Checking Deribit's DVOL, Binance prices, Alternative.me's Fear & Greed Index, then manually calculating annualized yield and assignment probability — it's exhausting.</p>
+    <p><strong>This tool automates all of that.</strong> Open the page, see what to do at a glance.</p>
+  </div>
+
+  <!-- Core Philosophy -->
+  <div class="section">
+    <h2>🧭 Core Philosophy</h2>
+    <blockquote>
+      <strong>Sell Puts when others are fearful (buy the dip), sell Calls when others are greedy (sell the top), collect premium at every step.</strong>
+    </blockquote>
+    <p>This isn't about predicting price direction — it's about earning extra premium on prices you'd buy/sell at anyway. The Wheel strategy turns "waiting" into "income."</p>
+  </div>
+
+  <!-- What It Does -->
+  <div class="section">
+    <h2>🛠 What It Does</h2>
+    <div class="features">
+      <div class="feat">
+        <div class="feat-icon">📍</div>
+        <div class="feat-title">One-Click Decision</div>
+        <div class="feat-desc">Tells you whether to sell Put, sell Call, or wait — with reasoning</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📊</div>
+        <div class="feat-title">Entry Signal Scoring</div>
+        <div class="feat-desc">Quantifies BTC dip severity, DVOL spike, IVP percentile into 0-100 scores</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📋</div>
+        <div class="feat-title">Contract Screener</div>
+        <div class="feat-desc">Real-time Deribit BTC options chain, auto-filtered and ranked by risk preference</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🧮</div>
+        <div class="feat-title">P&L Calculator</div>
+        <div class="feat-desc">Enter strike and premium, instantly see P&L curve and annualized yield</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📈</div>
+        <div class="feat-title">DVOL / Fear & Greed Charts</div>
+        <div class="feat-desc">90-day trend charts for volatility and market sentiment</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">🌈</div>
+        <div class="feat-title">BTC Rainbow Chart</div>
+        <div class="feat-desc">Log regression long-term valuation model — undervalued, fair, or bubble?</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📖</div>
+        <div class="feat-title">Beginner Tutorials</div>
+        <div class="feat-desc">4 expandable guides with concrete examples for every step of Wheel</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">❓</div>
+        <div class="feat-title">Module Help Tooltips</div>
+        <div class="feat-desc">Question mark on every chart module — hover for "how to read, how to use"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Who Is It For? -->
+  <div class="section">
+    <h2>🎯 Who Is It For?</h2>
+    <div class="tags">
+      <span class="tag yes">✓ Hold BTC and want extra yield</span>
+      <span class="tag yes">✓ USDT idle and want to buy dips</span>
+      <span class="tag yes">✓ Heard of options but never traded</span>
+      <span class="tag yes">✓ Experienced and want to save research time</span>
+    </div>
+    <div class="tags">
+      <span class="tag no">✗ Want high leverage directional bets</span>
+      <span class="tag no">✗ Unwilling to learn basics</span>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-top:8px">The Wheel is a conservative options selling strategy focused on steady premium income, not outsized gains.</p>
+  </div>
+
+  <!-- Data Sources -->
+  <div class="section">
+    <h2>📡 Data Sources</h2>
+    <p style="margin-bottom:14px">All data from free public APIs, real-time, no login required:</p>
+    <div class="sources">
+      <div class="source"><div class="source-dot" style="background:var(--yellow)"></div><a href="https://www.binance.com" target="_blank">Binance</a> — BTC real-time price</div>
+      <div class="source"><div class="source-dot" style="background:var(--blue)"></div><a href="https://www.deribit.com" target="_blank">Deribit</a> — DVOL + options chain</div>
+      <div class="source"><div class="source-dot" style="background:var(--orange)"></div><a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank">Alternative.me</a> — Fear & Greed Index</div>
+    </div>
+  </div>
+
+  <!-- Risk Disclaimer -->
+  <div class="risk-box">
+    ⚠️ <strong>Risk Disclaimer</strong>: This tool is for reference only and does not constitute investment advice. Options trading involves margin and potentially large losses. Make sure you understand the risks of the Wheel strategy (especially Sell Put risk during sharp BTC drops), and only use funds you can afford to lose.
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <a href="../" class="cta-btn">🎡 Start Using the Tool →</a>
+  </div>
+
+  <div class="footer">
+    Made by <a href="https://x.com/0xReggieJ" target="_blank" style="color:var(--blue)">@0xReggieJ</a> 🐦
+  </div>
+
+</div>
+</body>
+</html>
