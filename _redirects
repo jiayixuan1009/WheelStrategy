@@ -1,3 +1,5 @@
+# 根路径 301 跳转到中文首页（x-default），替代 meta refresh
+/    /cn/    301
 # 将带 .html 的地址 301 重定向到无后缀的干净 URL
 /cn/index.html    /cn/    301
 /en/index.html    /en/    301

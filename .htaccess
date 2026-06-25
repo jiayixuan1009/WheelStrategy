@@ -2,6 +2,8 @@
 RewriteEngine On
 RewriteBase /
 
+# 根路径 301 跳转到中文首页（x-default），替代 meta refresh
+RewriteRule ^$ /cn/ [R=301,L]
 RewriteRule ^cn/index\.html$ /cn/ [R=301,L]
 RewriteRule ^en/index\.html$ /en/ [R=301,L]
 RewriteRule ^cn/about\.html$ /cn/about/ [R=301,L]

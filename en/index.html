@@ -16,8 +16,11 @@
 <meta property="og:locale:alternate" content="zh_CN" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:creator" content="@0xReggieJ" />
+<meta property="og:image" content="https://wheel.cryptooptiontool.com/og-cover.png" />
+<meta name="twitter:image" content="https://wheel.cryptooptiontool.com/og-cover.png" />
 <title>Reggie's Wheel Strategy Assistant · BTC Options Tool</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <style>
 /* ─── Reset & Base ─── */
 *{margin:0;padding:0;box-sizing:border-box}
@@ -199,6 +202,9 @@ tr:hover td{background:rgba(255,255,255,.03)}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
 </style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Reggie's Wheel Strategy Assistant · BTC Options Tool","url":"https://wheel.cryptooptiontool.com/en/","applicationCategory":"FinanceApplication","operatingSystem":"Web","inLanguage":"en","description":"BTC Wheel Strategy Assistant — Real-time DVOL, Fear & Greed Index, options chain filtering, and entry signals to earn passive income with BTC options.","image":"https://wheel.cryptooptiontool.com/og-cover.png","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Reggie","url":"https://twitter.com/0xReggieJ"}}
+</script>
 </head>
 <body>
 
@@ -206,7 +212,7 @@ tr:hover td{background:rgba(255,255,255,.03)}
 <header class="header">
   <div class="container">
     <div class="header-inner">
-      <div class="logo">🎡 Reggie's Wheel Strategy Assistant <a href="about/" style="font-size:12px;color:var(--muted);font-weight:400;margin-left:8px;border:1px solid var(--border);padding:2px 10px;border-radius:12px">About</a></div>
+      <div class="logo">🎡 <h1 style="display:inline;font-size:inherit;font-weight:inherit;margin:0">Reggie's Wheel Strategy Assistant</h1> <a href="about/" style="font-size:12px;color:var(--muted);font-weight:400;margin-left:8px;border:1px solid var(--border);padding:2px 10px;border-radius:12px">About</a></div>
       <div class="btc-price-bar">
         <a href="../cn/" style="font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 10px;border-radius:12px;margin-right:8px">中文</a>
         <span class="btc-price" id="btcPrice">Loading…</span>
@@ -626,7 +632,7 @@ tr:hover td{background:rgba(255,255,255,.03)}
   </div>
 </div>
 
-<script src="../app.js"></script>
-<script>initApp('en');</script>
+<script src="../app.js" defer></script>
+<script>document.addEventListener('DOMContentLoaded',function(){initApp('en')});</script>
 </body>
 </html>

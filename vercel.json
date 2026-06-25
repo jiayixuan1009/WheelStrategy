@@ -1,5 +1,6 @@
 {
   "redirects": [
+    { "source": "/", "destination": "/cn/", "permanent": true },
     { "source": "/cn/index.html", "destination": "/cn/", "permanent": true },
     { "source": "/en/index.html", "destination": "/en/", "permanent": true },
     { "source": "/cn/about.html", "destination": "/cn/about/", "permanent": true },

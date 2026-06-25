@@ -16,8 +16,11 @@
 <meta property="og:locale:alternate" content="en_US" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:creator" content="@0xReggieJ" />
+<meta property="og:image" content="https://wheel.cryptooptiontool.com/og-cover.png" />
+<meta name="twitter:image" content="https://wheel.cryptooptiontool.com/og-cover.png" />
 <title>雷吉的轮动期权助手 · Wheel Strategy</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <style>
 /* ─── Reset & Base ─── */
 *{margin:0;padding:0;box-sizing:border-box}
@@ -199,6 +202,9 @@ tr:hover td{background:rgba(255,255,255,.03)}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
 </style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"雷吉的轮动期权助手 · BTC Wheel Strategy","url":"https://wheel.cryptooptiontool.com/cn/","applicationCategory":"FinanceApplication","operatingSystem":"Web","inLanguage":"zh-CN","description":"BTC 轮动期权助手 — 实时 DVOL、恐惧贪婪指数、期权链筛选与 Wheel 策略入场信号，帮你用期权在 BTC 上赚取被动收入。","image":"https://wheel.cryptooptiontool.com/og-cover.png","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Reggie","url":"https://twitter.com/0xReggieJ"}}
+</script>
 </head>
 <body>
 
@@ -206,7 +212,7 @@ tr:hover td{background:rgba(255,255,255,.03)}
 <header class="header">
   <div class="container">
     <div class="header-inner">
-      <div class="logo">🎡 雷吉的轮动期权助手 <a href="about/" style="font-size:12px;color:var(--muted);font-weight:400;margin-left:8px;border:1px solid var(--border);padding:2px 10px;border-radius:12px">关于</a></div>
+      <div class="logo">🎡 <h1 style="display:inline;font-size:inherit;font-weight:inherit;margin:0">雷吉的轮动期权助手</h1> <a href="about/" style="font-size:12px;color:var(--muted);font-weight:400;margin-left:8px;border:1px solid var(--border);padding:2px 10px;border-radius:12px">关于</a></div>
       <div class="btc-price-bar">
         <a href="../en/" style="font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 10px;border-radius:12px;margin-right:8px">EN</a>
         <span class="btc-price" id="btcPrice">加载中…</span>
@@ -628,7 +634,7 @@ tr:hover td{background:rgba(255,255,255,.03)}
   </div>
 </div>
 
-<script src="../app.js"></script>
-<script>initApp('zh');</script>
+<script src="../app.js" defer></script>
+<script>document.addEventListener('DOMContentLoaded',function(){initApp('zh')});</script>
 </body>
 </html>
