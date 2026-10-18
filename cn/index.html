@@ -20,7 +20,7 @@
 <meta name="twitter:image" content="https://wheel.cryptooptiontool.com/og-cover.jpg" />
 <title>雷吉的轮动期权助手 · Wheel Strategy</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js" integrity="sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo" crossorigin="anonymous" defer></script>
 <style>
 /* ─── Reset & Base ─── */
 *{margin:0;padding:0;box-sizing:border-box}
@@ -375,9 +375,9 @@ tr:hover td{background:rgba(255,255,255,.03)}
   <!-- ═══ OPTIONS TABLE + RISK CALC ═══ -->
   <div class="card">
     <div class="tabs">
-      <button class="tab-btn put-tab active" onclick="switchTab('options','put')">📋 Sell Put 合约选择</button>
-      <button class="tab-btn call-tab" onclick="switchTab('options','call')">📋 Covered Call 合约选择</button>
-      <button class="tab-btn" onclick="switchTab('options','calc')">🧮 盈亏计算器</button>
+      <button class="tab-btn put-tab active" data-tab="put" onclick="switchTab('options','put')">📋 Sell Put 合约选择</button>
+      <button class="tab-btn call-tab" data-tab="call" onclick="switchTab('options','call')">📋 Covered Call 合约选择</button>
+      <button class="tab-btn" data-tab="calc" onclick="switchTab('options','calc')">🧮 盈亏计算器</button>
       <span class="help-tip" style="margin-left:auto;margin-bottom:1px">?<span class="tip-text"><span class="tip-title">怎么看？</span><span>Sell Put 表：列出可卖的看跌期权，按年化收益排序。关注 Delta（越小越安全）和年化收益率。<br>Covered Call 表：列出可卖的看涨期权，逻辑类似。<br>盈亏计算器：输入参数后可视化你的盈亏曲线。<br><br><strong>怎么用？</strong>用上方筛选条件找合适的合约。新手选 Delta ≤0.20、到期 14-21 天的。绿色「保守推荐」标签是最安全的选择。</span></span></span>
     </div>
 

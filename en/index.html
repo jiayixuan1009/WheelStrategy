@@ -20,7 +20,7 @@
 <meta name="twitter:image" content="https://wheel.cryptooptiontool.com/og-cover.jpg" />
 <title>Reggie's Wheel Strategy Assistant · BTC Options Tool</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js" integrity="sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo" crossorigin="anonymous" defer></script>
 <style>
 /* ─── Reset & Base ─── */
 *{margin:0;padding:0;box-sizing:border-box}
@@ -375,9 +375,9 @@ tr:hover td{background:rgba(255,255,255,.03)}
   <!-- ═══ OPTIONS TABLE + RISK CALC ═══ -->
   <div class="card">
     <div class="tabs">
-      <button class="tab-btn put-tab active" onclick="switchTab('options','put')">📋 Sell Put Contracts</button>
-      <button class="tab-btn call-tab" onclick="switchTab('options','call')">📋 Covered Call Contracts</button>
-      <button class="tab-btn" onclick="switchTab('options','calc')">🧮 P&L Calculator</button>
+      <button class="tab-btn put-tab active" data-tab="put" onclick="switchTab('options','put')">📋 Sell Put Contracts</button>
+      <button class="tab-btn call-tab" data-tab="call" onclick="switchTab('options','call')">📋 Covered Call Contracts</button>
+      <button class="tab-btn" data-tab="calc" onclick="switchTab('options','calc')">🧮 P&L Calculator</button>
       <span class="help-tip" style="margin-left:auto;margin-bottom:1px">?<span class="tip-text"><span class="tip-title">How to read?</span><span><strong>Sell Put table</strong>: Lists available put options sorted by annual yield. Focus on Delta (lower = safer) and yield.<br><strong>Covered Call table</strong>: Similar for call options.<br><strong>P&L Calculator</strong>: Visualize your profit/loss curve.<br><br><strong>How to use?</strong> Filter for suitable contracts. Beginners: Delta ≤0.20, 14-21 day expiry. Green "Conservative" badge is the safest.</span></span></span>
     </div>
 
