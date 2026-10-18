@@ -71,6 +71,7 @@ const I18N = {
     tipFng: '0-100 的情绪指标。<strong>0 = 极度恐慌，100 = 极度贪婪</strong>。<br>• 红色柱（≤25）：市场恐慌，适合卖 Put<br>• 橙色柱（25-75）：中性<br>• 绿色柱（≥75）：市场贪婪，适合卖 Call<br><br><strong>怎么用？</strong>恐慌时卖 Put（别人恐惧你贪婪），贪婪时卖 Call（在高位锁利润）。',
     tipRainbow: '彩虹图用对数回归模型将 BTC 价格分为 9 个色带区间：<br>• <strong>蓝色区</strong>：极度低估，历史最佳买点<br>• <strong>绿色区</strong>：合理估值，HODL 区<br>• <strong>红色区</strong>：极度泡沫，考虑减仓<br><br><strong>怎么用？</strong>右上角显示当前 BTC 所在区间。<strong>蓝/绿区卖 Put 更安全</strong>（跌到行权价也是低估买入），<strong>橙/红区卖 Call 更合适</strong>（高估区锁定利润）。',
     tipEdu: '4 个可展开的教程，点击标题即可展开/收起。建议<strong>从上到下按顺序阅读</strong>。<br><br><strong>怎么用？</strong>如果你是期权新手，请先完整阅读这些教程再做任何操作。里面有具体的数字举例帮助理解。',
+    dataWarn: '⚠️ 部分实时数据加载失败，页面显示的可能不是最新值，请刷新重试。',
   },
   en: {
     loading: 'Loading…', loadingShort: 'Loading', loadingMarket: 'Loading market data…', analyzing: 'Analyzing',
@@ -143,6 +144,7 @@ const I18N = {
     tipFng: '0-100 sentiment indicator. <strong>0 = Extreme Fear, 100 = Extreme Greed</strong>.<br>• Red bars (≤25): Market fear — sell puts<br>• Orange (25-75): Neutral<br>• Green (≥75): Market greed — sell calls<br><br><strong>How to use?</strong> Sell puts during fear, sell calls during greed.',
     tipRainbow: 'Rainbow chart divides BTC price into 9 bands using log regression:<br>• <strong>Blue</strong>: Extremely undervalued, historic buy zone<br>• <strong>Green</strong>: Fair value, HODL zone<br>• <strong>Red</strong>: Extreme bubble, consider reducing<br><br><strong>How to use?</strong> Top-right shows current band. <strong>Blue/green = safer to sell puts</strong>, <strong>orange/red = better to sell calls</strong>.',
     tipEdu: '4 expandable tutorials. Click to open/close. Read <strong>top to bottom</strong>.<br><br><strong>How to use?</strong> If you\'re new to options, read all tutorials before trading. They include concrete examples with numbers.',
+    dataWarn: '⚠️ Some live data failed to load. Values shown may be stale — please refresh.',
   }
 };
 
@@ -162,6 +164,10 @@ const RAINBOW_BAND_NAMES_ZH = [
   '🔵 极度低估（火灾价）','🔵 买入机会','🔵 积累期','🟢 还算便宜',
   '🟡 HODL 持有','🟠 这是泡沫吗？','🟠 FOMO 来了','🔴 认真卖出','🔴 极度泡沫'
 ];
+
+// ─── Fallback values (used only when live API data is unavailable) ───
+const FALLBACK_BTC_PRICE = 80000;    // USD: rough placeholder when Binance price is missing
+const FALLBACK_CALC_STRIKE = 75000;  // USD: default strike in the P&L calculator
 
 // ─── Main App Wrapper ────────────────────────────────────────
 function initApp(lang) {
@@ -187,6 +193,7 @@ function initApp(lang) {
     position: 'usdt',
     putSortKey: 'yield', putSortDir: -1,
     callSortKey: 'yield', callSortDir: -1,
+    dataErrors: {},
   };
   let pnlChart = null, dvolChartObj = null, fngChartObj = null, rainbowChartObj = null;
 
@@ -214,6 +221,11 @@ function initApp(lang) {
     return r.json();
   }
 
+  // Escape untrusted strings before inserting them into innerHTML (DOM-XSS defense)
+  function escapeHtml(v) {
+    return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
   // ─── 1. BTC Price (Binance) ────────────────────────────────
   async function fetchBtcPrice() {
     try {
@@ -228,7 +240,7 @@ function initApp(lang) {
         const cur = parseFloat(klines[klines.length - 1][4]);
         state.btc1hChange = ((cur - prev) / prev) * 100;
       }
-    } catch(e) { console.warn('Binance:', e.message); }
+    } catch(e) { console.warn('Binance:', e.message); state.dataErrors.price = true; }
   }
 
   // ─── 2. DVOL + IVP (Deribit) ──────────────────────────────
@@ -255,7 +267,7 @@ function initApp(lang) {
         const mn = Math.min(...closes), mx = Math.max(...closes);
         state.ivr = mx > mn ? Math.round(((cur - mn) / (mx - mn)) * 100) : 50;
       }
-    } catch(e) { console.warn('Deribit DVOL:', e.message); }
+    } catch(e) { console.warn('Deribit DVOL:', e.message); state.dataErrors.dvol = true; }
   }
 
   // ─── 3. Fear & Greed (Alternative.me) ────────────────────
@@ -270,7 +282,7 @@ function initApp(lang) {
           t: parseInt(d.timestamp) * 1000, v: parseInt(d.value)
         }));
       }
-    } catch(e) { console.warn('F&G:', e.message); }
+    } catch(e) { console.warn('F&G:', e.message); state.dataErrors.fng = true; }
   }
 
   // ─── 4. Options (Deribit) ─────────────────────────────────
@@ -279,7 +291,7 @@ function initApp(lang) {
       const r = await fetchJson('https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option');
       const items = r.result || [];
       const now = Date.now();
-      const S = state.btcPrice || 80000;
+      const S = state.btcPrice || FALLBACK_BTC_PRICE;
       const processed = items.map(opt => {
         const name = opt.instrument_name;
         const parts = name.split('-');
@@ -300,7 +312,7 @@ function initApp(lang) {
       }).filter(Boolean);
       state.putOptions = processed.filter(o => o.type === 'P' && o.strike < S * 1.01).sort((a, b) => b.yield - a.yield);
       state.callOptions = processed.filter(o => o.type === 'C' && o.strike > S * 0.99).sort((a, b) => b.yield - a.yield);
-    } catch(e) { console.warn('Options:', e.message); }
+    } catch(e) { console.warn('Options:', e.message); state.dataErrors.options = true; }
   }
 
   function parseDeribitExpiry(s) {
@@ -617,7 +629,7 @@ function initApp(lang) {
       o.yield >= minYield && Math.abs(o.delta) <= maxDelta
     );
     opts = sortOpts(opts, state.putSortKey, state.putSortDir).slice(0, 30);
-    const S = state.btcPrice || 80000;
+    const S = state.btcPrice || FALLBACK_BTC_PRICE;
     const tbody = document.getElementById('put-tbody');
     if (!opts.length) { tbody.innerHTML = `<tr class="empty-row"><td colspan="9">${T('noContracts')}</td></tr>`; return; }
     tbody.innerHTML = opts.map(o => {
@@ -625,7 +637,7 @@ function initApp(lang) {
       const bePct = (((o.strike - S) / S) * 100).toFixed(1);
       return `<tr>
         <td><strong>$${o.strike.toLocaleString()}</strong> <span style="color:var(--muted);font-size:11px">(${bePct}%)</span></td>
-        <td>${o.expiryStr}</td>
+        <td>${escapeHtml(o.expiryStr)}</td>
         <td>${o.daysLeft}${T('daysUnit')}</td>
         <td style="color:${Math.abs(o.delta)<0.25?'var(--green)':'var(--orange)'}">${o.delta.toFixed(3)}</td>
         <td>${o.iv.toFixed(1)}%</td>
@@ -642,7 +654,7 @@ function initApp(lang) {
     const minYield = parseFloat(document.getElementById('call-min-yield').value) || 0;
     const risk = document.getElementById('call-risk').value;
     const maxDelta = risk === 'conservative' ? 0.25 : risk === 'moderate' ? 0.40 : 1;
-    const S = state.btcPrice || 80000;
+    const S = state.btcPrice || FALLBACK_BTC_PRICE;
     let opts = state.callOptions.filter(o =>
       o.daysLeft >= minDays && o.daysLeft <= maxDays &&
       o.yield >= minYield && o.delta <= maxDelta && o.strike > S
@@ -654,7 +666,7 @@ function initApp(lang) {
       const upPct = (((o.strike - S) / S) * 100).toFixed(1);
       return `<tr>
         <td><strong>$${o.strike.toLocaleString()}</strong> <span style="color:var(--muted);font-size:11px">(+${upPct}%)</span></td>
-        <td>${o.expiryStr}</td>
+        <td>${escapeHtml(o.expiryStr)}</td>
         <td>${o.daysLeft}${T('daysUnit')}</td>
         <td style="color:${o.delta<0.25?'var(--green)':'var(--orange)'}">${o.delta.toFixed(3)}</td>
         <td>${o.iv.toFixed(1)}%</td>
@@ -689,15 +701,15 @@ function initApp(lang) {
   function updateCalc() {
     const type = document.getElementById('calc-type').value;
     const capital = parseFloat(document.getElementById('calc-capital').value) || 10000;
-    const strike = parseFloat(document.getElementById('calc-strike').value) || 75000;
+    const strike = parseFloat(document.getElementById('calc-strike').value) || FALLBACK_CALC_STRIKE;
     const days = parseFloat(document.getElementById('calc-days').value) || 14;
     const premium = parseFloat(document.getElementById('calc-premium').value) || 400;
-    const S = parseFloat(document.getElementById('calc-btc-price').value) || state.btcPrice || 80000;
+    const S = parseFloat(document.getElementById('calc-btc-price').value) || state.btcPrice || FALLBACK_BTC_PRICE;
     document.getElementById('calc-btc-price').value = S;
     const margin = strike * 0.1;
     const maxProfit = premium;
     const breakeven = type === 'put' ? strike - premium : strike + premium;
-    const maxLoss = type === 'put' ? (strike - premium) : 9999999;
+    const maxLoss = type === 'put' ? (strike - premium) : Infinity; // Covered Call: downside is unbounded
     const annRate = (premium / strike) * (365 / days) * 100;
     const prob = Math.abs(bsDelta(S, strike, days / 365, 0.7, type === 'call')) * 100;
     document.getElementById('res-max-profit').textContent = '+$' + maxProfit.toLocaleString();
@@ -782,15 +794,27 @@ function initApp(lang) {
     });
   }
 
+  // ─── Data-failure notice ───────────────────────────────────
+  function showDataWarning() {
+    const failed = Object.keys(state.dataErrors).filter(k => state.dataErrors[k]);
+    if (!failed.length) return;
+    if (document.getElementById('dataWarning')) return;
+    const el = document.createElement('div');
+    el.id = 'dataWarning';
+    el.setAttribute('role', 'alert');
+    el.style.cssText = 'background:rgba(210,153,34,.15);border:1px solid var(--orange);color:var(--text);'
+      + 'padding:8px 12px;border-radius:6px;margin:12px auto;max-width:1200px;font-size:13px';
+    el.textContent = T('dataWarn') + ' [' + failed.join(', ') + ']';
+    document.body.insertBefore(el, document.body.firstChild);
+  }
+
   // ─── Tabs ──────────────────────────────────────────────────
   function switchTab(group, tab) {
     const prefix = group + '-tab-';
     document.querySelectorAll('[id^="' + prefix + '"]').forEach(el => el.classList.remove('active'));
     document.getElementById(prefix + tab).classList.add('active');
-    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-      const tabs = ['put', 'call', 'calc'];
-      btn.classList.remove('active');
-      if (tabs[i] === tab) btn.classList.add('active');
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
     });
     if (tab === 'calc') updateCalc();
   }
@@ -817,10 +841,11 @@ function initApp(lang) {
     fetchRainbowData().then(data => {
       drawRainbowChart(data);
       updateRainbowBandBadge();
-    });
+    }).catch(e => console.warn('Rainbow render:', e && e.message));
     await fetchOptions();
     renderPutTable();
     renderCallTable();
+    showDataWarning();
   }
 
   // ─── Expose onclick handlers globally ──────────────────────
@@ -833,7 +858,7 @@ function initApp(lang) {
   window.updateCalc = updateCalc;
 
   // ─── Run init and set up timers ────────────────────────────
-  init();
+  init().catch(e => console.error('init failed:', e));
 
   // BTC price: every 30s
   setInterval(async () => {
